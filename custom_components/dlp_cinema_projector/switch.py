@@ -8,22 +8,22 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .coordinator import ChristieConfigEntry, ChristieCoordinator
-from .entity import ChristieEntity
+from .coordinator import ProjectorConfigEntry, ProjectorCoordinator
+from .entity import ProjectorEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ChristieConfigEntry,
+    entry: ProjectorConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([ChristieShutter(entry.runtime_data)])
+    async_add_entities([ProjectorShutter(entry.runtime_data)])
 
 
-class ChristieShutter(ChristieEntity, SwitchEntity):
+class ProjectorShutter(ProjectorEntity, SwitchEntity):
     _attr_translation_key = "shutter_closed"
 
-    def __init__(self, coordinator: ChristieCoordinator) -> None:
+    def __init__(self, coordinator: ProjectorCoordinator) -> None:
         super().__init__(coordinator, "shutter")
 
     @property

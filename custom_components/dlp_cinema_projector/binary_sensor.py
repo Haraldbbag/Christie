@@ -7,24 +7,24 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .coordinator import ChristieConfigEntry, ChristieCoordinator
-from .entity import ChristieEntity
+from .coordinator import ProjectorConfigEntry, ProjectorCoordinator
+from .entity import ProjectorEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ChristieConfigEntry,
+    entry: ProjectorConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([ChristieConnected(entry.runtime_data)])
+    async_add_entities([ProjectorConnected(entry.runtime_data)])
 
 
-class ChristieConnected(ChristieEntity, BinarySensorEntity):
+class ProjectorConnected(ProjectorEntity, BinarySensorEntity):
     _attr_translation_key = "connected"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, coordinator: ChristieCoordinator) -> None:
+    def __init__(self, coordinator: ProjectorCoordinator) -> None:
         super().__init__(coordinator, "connected")
 
     @property

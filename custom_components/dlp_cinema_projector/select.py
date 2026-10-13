@@ -6,9 +6,7 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import (
-    PATTERN_OFF,
-    POWER_COMMANDS,
+from .common import (
     PWR_COOLING,
     PWR_HIBERNATE,
     PWR_LIGHT_OFF,
@@ -16,8 +14,9 @@ from .const import (
     PWR_STANDBY,
     PWR_WARMING,
 )
-from .coordinator import ChristieConfigEntry, ChristieCoordinator
-from .entity import ChristieEntity
+from .const import PATTERN_OFF
+from .coordinator import ProjectorConfigEntry, ProjectorCoordinator
+from .entity import ProjectorEntity
 
 _CURRENT = {
     PWR_ON: "lamp_on",
@@ -31,21 +30,24 @@ _CURRENT = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ChristieConfigEntry,
+    entry: ProjectorConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     c = entry.runtime_data
-    async_add_entities([ChristiePower(c), ChristieChannel(c), ChristiePattern(c)])
+    entities: list[SelectEntity] = [ProjectorPower(c), ProjectorChannel(c)]
+    if c.driver.has_patterns:
+        entities.append(ProjectorPattern(c))
+    async_add_entities(entities)
 
 
-class ChristiePower(ChristieEntity, SelectEntity):
-    """Standby / light source off / light source on."""
+class ProjectorPower(ProjectorEntity, SelectEntity):
+    """Standby (Christie only) / light source off / light source on."""
 
     _attr_translation_key = "power"
-    _attr_options = list(POWER_COMMANDS)
 
-    def __init__(self, coordinator: ChristieCoordinator) -> None:
+    def __init__(self, coordinator: ProjectorCoordinator) -> None:
         super().__init__(coordinator, "power_select")
+        self._attr_options = list(coordinator.driver.power_options)
 
     @property
     def current_option(self) -> str | None:
@@ -60,10 +62,10 @@ class ChristiePower(ChristieEntity, SelectEntity):
         await self.coordinator.async_set_power(option)
 
 
-class ChristieChannel(ChristieEntity, SelectEntity):
+class ProjectorChannel(ProjectorEntity, SelectEntity):
     _attr_translation_key = "channel"
 
-    def __init__(self, coordinator: ChristieCoordinator) -> None:
+    def __init__(self, coordinator: ProjectorCoordinator) -> None:
         super().__init__(coordinator, "channel")
 
     @property
@@ -82,10 +84,10 @@ class ChristieChannel(ChristieEntity, SelectEntity):
         await self.coordinator.async_set_channel(option)
 
 
-class ChristiePattern(ChristieEntity, SelectEntity):
+class ProjectorPattern(ProjectorEntity, SelectEntity):
     _attr_translation_key = "test_pattern"
 
-    def __init__(self, coordinator: ChristieCoordinator) -> None:
+    def __init__(self, coordinator: ProjectorCoordinator) -> None:
         super().__init__(coordinator, "test_pattern")
 
     @property

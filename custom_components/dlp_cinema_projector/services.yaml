@@ -4,7 +4,7 @@ send_command:
       required: true
       selector:
         device:
-          integration: christie
+          integration: dlp_cinema_projector
     command:
       required: true
       example: "(HLP?)"

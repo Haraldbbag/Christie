@@ -16,13 +16,13 @@ import pathlib
 import sys
 import types
 
-_PKG = pathlib.Path(__file__).resolve().parents[1] / "custom_components" / "christie"
-if "christie" not in sys.modules:
-    pkg = types.ModuleType("christie")
+_PKG = pathlib.Path(__file__).resolve().parents[1] / "custom_components" / "dlp_cinema_projector"
+if "dlp_cinema_projector" not in sys.modules:
+    pkg = types.ModuleType("dlp_cinema_projector")
     pkg.__path__ = [str(_PKG)]
-    sys.modules["christie"] = pkg
+    sys.modules["dlp_cinema_projector"] = pkg
 
-from christie import protocol as p  # noqa: E402
+from dlp_cinema_projector import christie_protocol as p  # noqa: E402
 
 PATTERNS = ["DC2K Framing Green", "DC2K Full White", "Grey (50%)"]
 CHANNELS = ["Media Block Flat", "Media Block Scope", "HDMI A", "HDMI B", "HDMI 3D LR"]

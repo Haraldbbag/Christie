@@ -7,7 +7,13 @@ from dataclasses import dataclass
 import logging
 import time
 
-from . import protocol as p
+from . import christie_protocol as p
+from .common import (
+    ProjectorAuthError as ChristieAuthError,
+    ProjectorCommandError as ChristieCommandError,
+    ProjectorError as ChristieError,
+    ProjectorTimeout as ChristieTimeout,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,22 +22,6 @@ REPLY_TIMEOUT = 3.0  # wait for the reply to a request
 ACK_TIMEOUT = 1.0  # sets are not always answered; wait this long for an error
 LIST_IDLE = 1.0  # a list is complete when nothing arrives for this long
 LIST_TIMEOUT = 15.0
-
-
-class ChristieError(Exception):
-    """Connection or protocol problem."""
-
-
-class ChristieCommandError(ChristieError):
-    """The projector answered with an error message."""
-
-
-class ChristieTimeout(ChristieError):
-    """The projector did not answer (but the connection is up)."""
-
-
-class ChristieAuthError(ChristieError):
-    """Login (UID) was rejected."""
 
 
 @dataclass(slots=True)
@@ -43,6 +33,7 @@ class DeviceInfo:
     @property
     def model(self) -> str:
         return {
+            46: "Series 2",
             60: "Series 3 (CineLife)",
             71: "Series 4 (CineLife+)",
         }.get(self.type_code or -1, f"Typ {self.type_code}" if self.type_code is not None else "Christie")

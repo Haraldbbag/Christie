@@ -9,8 +9,8 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import fake_christie  # noqa: E402  (registers the package stub)
-from christie import protocol as p  # noqa: E402
-from christie.client import (  # noqa: E402
+from dlp_cinema_projector import christie_protocol as p  # noqa: E402
+from dlp_cinema_projector.christie_client import (  # noqa: E402
     ChristieAuthError,
     ChristieClient,
     ChristieCommandError,

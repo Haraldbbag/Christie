@@ -1,6 +1,8 @@
-"""Christie cinema projectors."""
+"""DLP cinema projectors (Christie, Barco, Kinoton)."""
 
 from __future__ import annotations
+
+from typing import Any, Mapping
 
 import voluptuous as vol
 
@@ -10,9 +12,19 @@ from homeassistant.exceptions import ConfigEntryNotReady, ServiceValidationError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 
-from .client import ChristieClient, ChristieError
-from .const import DEFAULT_PORT, DOMAIN
-from .coordinator import ChristieConfigEntry, ChristieCoordinator
+from .barco_driver import BarcoDriver
+from .christie_driver import ChristieDriver
+from .common import ProjectorError
+from .const import (
+    BRAND_CHRISTIE,
+    CONF_BRAND,
+    CONF_CHANNELS,
+    DEFAULT_PORTS,
+    DOMAIN,
+    MANUFACTURERS,
+)
+from .coordinator import ProjectorConfigEntry, ProjectorCoordinator
+from .driver import Driver
 
 PLATFORMS = [
     Platform.BINARY_SENSOR,
@@ -33,10 +45,23 @@ SEND_COMMAND_SCHEMA = vol.Schema(
 )
 
 
+def create_driver(data: Mapping[str, Any], options: Mapping[str, Any] | None = None) -> Driver:
+    """Driver for a config entry's data (also used by the config flow)."""
+    brand = data.get(CONF_BRAND, BRAND_CHRISTIE)
+    port = data.get(CONF_PORT, DEFAULT_PORTS[brand])
+    if brand == BRAND_CHRISTIE:
+        text = (options or {}).get(CONF_CHANNELS) or ""
+        names = [x.strip() for x in text.replace(",", "\n").splitlines() if x.strip()]
+        return ChristieDriver(
+            data[CONF_HOST], port, data.get(CONF_USERNAME), data.get(CONF_PASSWORD), names
+        )
+    return BarcoDriver(data[CONF_HOST], port, MANUFACTURERS[brand])
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def send_command(call: ServiceCall) -> ServiceResponse:
         device = dr.async_get(hass).async_get(call.data["device_id"])
-        coordinator: ChristieCoordinator | None = None
+        coordinator: ProjectorCoordinator | None = None
         if device is not None:
             for entry_id in device.config_entries:
                 entry = hass.config_entries.async_get_entry(entry_id)
@@ -44,7 +69,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                     coordinator = entry.runtime_data
                     break
         if coordinator is None:
-            raise ServiceValidationError("Kein eingerichteter Christie-Projektor für dieses Gerät.")
+            raise ServiceValidationError("Kein eingerichteter Projektor für dieses Gerät.")
         replies = await coordinator.async_send_raw(call.data["command"])
         return {"replies": replies}
 
@@ -58,25 +83,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ChristieConfigEntry) -> bool:
-    host = entry.data[CONF_HOST]
-    client = ChristieClient(
-        host,
-        entry.data.get(CONF_PORT, DEFAULT_PORT),
-        entry.data.get(CONF_USERNAME),
-        entry.data.get(CONF_PASSWORD),
-    )
+async def async_setup_entry(hass: HomeAssistant, entry: ProjectorConfigEntry) -> bool:
+    driver = create_driver(entry.data, entry.options)
     try:
-        info = await client.device_info()
-    except ChristieError as err:
-        await client.close()
-        raise ConfigEntryNotReady(f"{host} nicht erreichbar: {err}") from err
+        info = await driver.device_info()
+    except ProjectorError as err:
+        await driver.close()
+        raise ConfigEntryNotReady(f"{entry.data[CONF_HOST]} nicht erreichbar: {err}") from err
 
-    coordinator = ChristieCoordinator(hass, entry, client, info)
+    coordinator = ProjectorCoordinator(hass, entry, driver, info)
     try:
         await coordinator.async_config_entry_first_refresh()
     except Exception:
-        await client.close()
+        await driver.close()
         raise
     entry.runtime_data = coordinator
 
@@ -85,12 +104,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ChristieConfigEntry) -> 
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ChristieConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ProjectorConfigEntry) -> bool:
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
         await entry.runtime_data.async_shutdown()
     return unloaded
 
 
-async def _async_reload(hass: HomeAssistant, entry: ChristieConfigEntry) -> None:
+async def _async_reload(hass: HomeAssistant, entry: ProjectorConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)

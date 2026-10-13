@@ -1,0 +1,14 @@
+{
+  "domain": "dlp_cinema_projector",
+  "name": "DLP Cinema Projector",
+  "codeowners": [
+    "@Haraldbbag"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/Haraldbbag/DLP_CinemaProjector",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Haraldbbag/DLP_CinemaProjector/issues",
+  "requirements": [],
+  "version": "0.3.0"
+}

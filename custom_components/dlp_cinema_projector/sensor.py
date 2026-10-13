@@ -6,25 +6,26 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import POWER_STATES
-from .coordinator import ChristieConfigEntry, ChristieCoordinator
-from .entity import ChristieEntity
+from .common import POWER_STATES
+from .coordinator import ProjectorConfigEntry, ProjectorCoordinator
+from .entity import ProjectorEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ChristieConfigEntry,
+    entry: ProjectorConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([ChristiePowerStatus(entry.runtime_data)])
+    if entry.runtime_data.driver.has_status:
+        async_add_entities([ProjectorPowerStatus(entry.runtime_data)])
 
 
-class ChristiePowerStatus(ChristieEntity, SensorEntity):
+class ProjectorPowerStatus(ProjectorEntity, SensorEntity):
     _attr_translation_key = "status"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = [*dict.fromkeys(POWER_STATES.values()), "unknown"]
 
-    def __init__(self, coordinator: ChristieCoordinator) -> None:
+    def __init__(self, coordinator: ProjectorCoordinator) -> None:
         super().__init__(coordinator, "status")
 
     @property

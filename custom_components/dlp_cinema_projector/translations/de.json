@@ -2,14 +2,41 @@
   "config": {
     "step": {
       "user": {
-        "title": "Christie-Projektor hinzufügen",
-        "description": "Steuerport ist normalerweise 5000. Benutzer/Passwort nur, wenn der Projektor eine Anmeldung verlangt (z. B. für Testbilder).",
+        "title": "Projektor hinzufügen",
+        "description": "Hersteller wählen",
+        "menu_options": {
+          "christie": "Christie",
+          "barco": "Barco (DP Series 2)",
+          "kinoton": "Kinoton (Barco DP Series 2)"
+        }
+      },
+      "christie": {
+        "title": "Christie-Projektor",
+        "description": "Steuerport normalerweise 5000. Benutzer/Passwort nur, wenn der Projektor eine Anmeldung verlangt.",
         "data": {
           "host": "Host",
           "port": "Port",
           "name": "Name (z. B. Kino 1)",
           "username": "Benutzer",
           "password": "Passwort"
+        }
+      },
+      "barco": {
+        "title": "Barco-Projektor",
+        "description": "Series 2: Port 43728 (Series 1: 43680). Wird zunächst im Modus „Nur lesen“ eingerichtet.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "name": "Name (z. B. Kino 1)"
+        }
+      },
+      "kinoton": {
+        "title": "Kinoton-Projektor",
+        "description": "Barco-Protokoll, Series 2: Port 43728. Wird zunächst im Modus „Nur lesen“ eingerichtet.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "name": "Name (z. B. Kino 1)"
         }
       },
       "reconfigure": {
@@ -42,7 +69,7 @@
           "channels": "Kanalnamen (falls der Projektor keine Liste liefert)"
         },
         "data_description": {
-          "read_only": "Blockiert alle Schaltbefehle (Lampe, Shutter, Kanal, Testbild, Rohbefehle ohne „?“).",
+          "read_only": "Blockiert alle Schaltbefehle (Lampe, Shutter, Kanal, Testbild, schreibende Rohbefehle).",
           "channels": "Ein Name pro Zeile oder durch Komma getrennt. Leer = Standard-Kanäle."
         }
       }
@@ -103,15 +130,15 @@
   "services": {
     "send_command": {
       "name": "Befehl senden",
-      "description": "Sendet einen Rohbefehl, z. B. (HLP?), und gibt alle Antworten zurück.",
+      "description": "Sendet einen Rohbefehl und gibt alle Antworten zurück. Christie: Text wie (HLP?). Barco/Kinoton: Hex-Bytes ohne Rahmen und Prüfsumme, z. B. 76 9A.",
       "fields": {
         "device_id": {
           "name": "Projektor",
-          "description": "Christie-Projektor"
+          "description": "Projektor"
         },
         "command": {
           "name": "Befehl",
-          "description": "Mit oder ohne Klammern, z. B. PWR? oder (SHU 1)"
+          "description": "Christie: PWR? oder (SHU 1). Barco/Kinoton: Hex, z. B. 21 42"
         }
       }
     }
