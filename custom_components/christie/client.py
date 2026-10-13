@@ -243,6 +243,26 @@ class ChristieClient:
 
         return await self._run(run)
 
+    async def request_all(self, key: str, args: str = "") -> list[p.Message]:
+        """Send ``(KEY?)`` and return every reply (some requests answer with many lines)."""
+        code, sub = self._key(key)
+        command = f"{key}?{(' ' + args) if args else ''}"
+
+        async def run() -> list[p.Message]:
+            await self._send(command)
+            out: list[p.Message] = []
+            end = time.monotonic() + LIST_TIMEOUT
+            idle = REPLY_TIMEOUT
+            while (msg := await self._next(min(idle, end - time.monotonic()))) is not None:
+                if msg.error is not None:
+                    raise ChristieCommandError(f"({command}): {msg.error}")
+                if msg.code == code and msg.sub == sub and msg.kind == "!":
+                    out.append(msg)
+                    idle = LIST_IDLE
+            return out
+
+        return await self._run(run)
+
     async def set(self, command: str) -> p.Message | None:
         """Send a set command; raise on an error reply, return the reply if any."""
         code, sub = self._key(command)

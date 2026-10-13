@@ -89,17 +89,29 @@ async def _series2() -> None:
     c = ChristieClient("127.0.0.1", 15001)
     try:
         info = await c.device_info()
-        assert info.type_code is None and info.serial is None
-        assert (await c.request("CHA")).number == 1
+        assert info.type_code == 46 and info.version == "4.8.1", info
+        assert (await c.request("PWR")).number == 3
+        try:
+            await c.request("CHA")
+        except ChristieCommandError as err:
+            assert "power off" in str(err)
+        else:
+            raise AssertionError("expected standby error")
         try:
             await c.request_list("CHA")
         except ChristieCommandError:
             pass
-        await c.set("CHA 3")
-        assert (await c.request("CHA")).number == 3
-        await c.set("ITP 2")
-        assert (await c.request("ITP")).number is None
-        await c.set("ITP 0")
+        names = await c.request_all("NAM+CALL")
+        assert [m.text for m in names][:2] == fake_christie.CHANNELS[:2]
+        await c.set("PWR 0")
+        assert (await c.request("CHA")).number == 101
+        await c.set("CHA 103")
+        assert (await c.request("CHA")).number == 103
+        m = await c.request("ITP")
+        assert m.number == 0 and m.text == "Testpattern Off"
+        await c.set(f"ITP {p.quote('DC2K Full White')}")
+        assert (await c.request("ITP")).text == "DC2K Full White"
+        await c.set('ITP ""')
         assert (await c.request("ITP")).number == 0
     finally:
         await c.close()

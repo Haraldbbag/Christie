@@ -93,7 +93,10 @@ class ChristiePattern(ChristieEntity, SelectEntity):
 
     @property
     def current_option(self) -> str | None:
-        return self.coordinator.data.pattern or PATTERN_OFF
+        d = self.coordinator.data
+        if not d.pattern_known:
+            return None  # e.g. Series 2 in standby does not answer ITP?
+        return d.pattern or PATTERN_OFF
 
     async def async_select_option(self, option: str) -> None:
         await self.coordinator.async_set_pattern(option)

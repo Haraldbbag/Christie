@@ -2,8 +2,9 @@
 
     python3 tests/fake_christie.py [host] [port] [--series2]
 
---series2 simulates an older projector without PNG/PWR+STAT/CHA?L that uses
-numbered channels and test patterns.
+--series2 simulates a Series 2 projector as seen on a CP2210 (TPC 4.8.1):
+channels numbered 101..164 with names via NAM+CALL?, no CHA?L, CHA?/ITP?
+refused in standby, "Testpattern Off" as pattern 0.
 Importing this module also registers a package stub so the client can be
 imported without Home Assistant.
 """
@@ -57,19 +58,23 @@ def handle(st: State, raw: str) -> list[str]:
             return []
         return [_err("UID: Invalid user or password")]
     if key == "PNG" and kind == "?":
-        return [] if st.series2 else ["(PNG!060 002 003 001)"]
+        return ["(PNG!046 004 008 001)"] if st.series2 else ["(PNG!060 002 003 001)"]
+    if st.series2 and key in ("CHA", "ITP", "NAM") and kind == "?" and not m.is_list and st.power == 3:
+        return [_err(f"{key}: Command disabled in power off mode \\(PWR 3\\)")]
+    if key == "NAM+CALL" and kind == "?" and st.series2:
+        return [f'(NAM+CALL!"{p.escape(n)}" {i + 1:05d})' for i, n in enumerate(CHANNELS)] + ['(NAM+CALL!" " 00006)']
+    if key == "NAM" and kind == "?" and st.series2:
+        return [f'(NAM!"{p.escape(st.channel)}")']
     if key == "SST+SERI" and kind == "?":
-        if st.series2:
-            return []
         return ['(SST+SERI!000 001 "PRJ123456" "Projector Serial")', '(SST+SERI!001 001 "LD-1" "Light Engine Serial")']
     if key == "PWR":
         if kind == "?":
-            return [f"(PWR!{st.power:03d})"]
+            return [f'(PWR!{st.power:03d} "Power")' if st.series2 else f"(PWR!{st.power:03d})"]
         st.power = int(m.params[0])
         st.status = 11 if st.power == 1 else (10 if st.power == 0 and st.status in (1, 11) else st.power)
         return [f"(PWR!{st.power:03d})"]
     if key == "PWR+STAT" and kind == "?":
-        return [_err("PWR+STAT: Unknown command")] if st.series2 else [f"(PWR+STAT!{st.status:03d})"]
+        return [f"(PWR+STAT!{st.status:03d})"]
     if key == "PWR+COOL" and kind == "?":
         return ["(PWR+COOL!00480)"]
     if key == "SHU":
@@ -80,12 +85,16 @@ def handle(st: State, raw: str) -> list[str]:
     if key == "CHA":
         if kind == "?" and m.is_list:
             if st.series2:
-                return [_err("CHA: Unknown command")]
+                return [_err("CHA: Invalid list / Not a list control")]
             return [f'(CHA!L001 001 {i:03d} "{p.escape(n)}")' for i, n in enumerate(CHANNELS)] + ['(CHA!L111 "--END--")']
         if kind == "?":
-            return [f"(CHA!{CHANNELS.index(st.channel) + 1:03d})" if st.series2 else f'(CHA! "{p.escape(st.channel)}")']
+            return [f"(CHA!{CHANNELS.index(st.channel) + 101:03d})" if st.series2 else f'(CHA! "{p.escape(st.channel)}")']
         val = m.params[0] if m.params else ""
-        if val.isdigit():
+        if st.series2 and val.isdigit() and 101 <= int(val) <= 100 + len(CHANNELS):
+            st.channel = CHANNELS[int(val) - 101]
+        elif st.series2:
+            return [_err("CHA: Invalid Parameter")]
+        elif val.isdigit():
             st.channel = CHANNELS[int(val) - 1]
         elif val in CHANNELS:
             st.channel = val
@@ -96,19 +105,20 @@ def handle(st: State, raw: str) -> list[str]:
         if not st.logged_in:
             return [_err("ITP: Access denied")]
         if kind == "?" and m.is_list:
-            return [f'(ITP!L001 001 {i:03d} "{p.escape(n)}")' for i, n in enumerate(PATTERNS)] + ['(ITP!L111 "--END--")']
+            names = (["Testpattern Off"] if st.series2 else []) + PATTERNS
+            return [f'(ITP!L001 001 {i:03d} "{p.escape(n)}")' for i, n in enumerate(names)] + ['(ITP!L111 "--END--")']
         if kind == "?":
+            if st.series2:
+                if st.pattern is None:
+                    return ['(ITP!000 "Testpattern Off")']
+                return [f'(ITP!{PATTERNS.index(st.pattern) + 1:03d} "{p.escape(st.pattern)}")']
             if st.pattern is None:
                 return ["(ITP!0)"]
             return [f'(ITP!"{p.escape(st.pattern)}")']
         if not m.params:
             return [_err("ITP: Too Few Parameters")]
         val = m.params[0]
-        if '""' in m.data and not st.series2:
-            st.pattern = None
-        elif val == "0" or val == "":
-            if st.series2 and val == "":
-                return [_err("ITP: Invalid pattern")]
+        if '""' in m.data or val == "0":
             st.pattern = None
         elif val.isdigit():
             st.pattern = PATTERNS[int(val) - 1]

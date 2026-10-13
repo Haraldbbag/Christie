@@ -52,8 +52,8 @@ Pro Projektor erneut hinzufügen (drei Projektoren = dreimal). IP-Wechsel:
 | **Auswahl „Betriebszustand“** | *Standby* (`PWR 3`) / *Lampe aus* (`PWR 0`) / *Lampe an* (`PWR 1`) |
 | **Sensor „Status“** | Standby, Lampe aus, Lampe an, Aufwärmen, Abkühlen (Attribut `cooldown_seconds`) |
 | **Schalter „Shutter geschlossen“** | an = Shutter zu (`SHU 1`), aus = offen (`SHU 0`) |
-| **Auswahl „Kanal“** | Liste vom Projektor (`CHA?L`), sonst aus den Optionen |
-| **Auswahl „Testbild“** | Liste vom Projektor (`ITP?L`), „Aus“ schaltet das Testbild ab |
+| **Auswahl „Kanal“** | Kanalnamen vom Projektor (CineLife: `CHA?L`, Series 2: `NAM+CALL?`), sonst aus den Optionen |
+| **Auswahl „Testbild“** | Liste vom Projektor (`ITP?L`), „Aus“ schaltet das Testbild ab (`ITP ""`) |
 | Binärsensor „Verbunden“ | Diagnose |
 | Button „Listen aktualisieren“ | liest Kanal- und Testbildliste neu (passiert sonst alle 10 min und beim Einschalten) |
 
@@ -85,6 +85,11 @@ Grundlage: Christie *CineLife 2.3.1 Serial Commands* (020-102774-01) und
   Fehler als `(65535 00000 ERR00005 "Text")`.
 - Eine persistente Verbindung, Befehle werden serialisiert, bei Abbruch
   automatische Neuverbindung.
+- **Series 2** (getestet: CP2210, TPC-Software 4.8.1, `PNG` Typ 46): Kanäle sind
+  nummeriert, `CHA?` liefert `101`–`164`, gesetzt wird ebenfalls per Nummer
+  (`CHA 118`), die Namen kommen aus `NAM+CALL?`. Im Standby (`PWR 3`) beantwortet
+  der Projektor `CHA?` und `ITP?` nicht – Kanal und Testbild zeigen dann den
+  letzten bekannten Wert. „Testpattern Off“ ist Testbild 0 und erscheint als „Aus“.
 - Abfragen, die ein Modell nicht kennt (z. B. `PWR+STAT` bei älteren Geräten),
   werden übersprungen und alle 10 min erneut probiert.
 

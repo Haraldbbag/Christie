@@ -52,6 +52,8 @@ class ChristieData:
     channels: list[str] = field(default_factory=list)
     patterns: list[str] = field(default_factory=list)
     channels_from_projector: bool = False
+    channel_numbers: dict[str, int] = field(default_factory=dict)  # numbered channels
+    pattern_known: bool = False
 
     @property
     def state(self) -> int | None:
@@ -89,6 +91,7 @@ class ChristieCoordinator(DataUpdateCoordinator[ChristieData]):
         self._burst_task: asyncio.Task | None = None
         self._was_on = False
         self._numeric_channels = False  # model answers CHA? with a number
+        self._channel_offset = 0  # Series 2 numbers channels 101..164
 
     # -- polling ------------------------------------------------------------
 
@@ -138,6 +141,7 @@ class ChristieCoordinator(DataUpdateCoordinator[ChristieData]):
                 d.channel = self._channel_name(m)
             if (m := await self._query("ITP")) is not None:
                 d.pattern = _pattern_name(m)
+                d.pattern_known = True
 
         except ChristieError as err:
             raise UpdateFailed(str(err)) from err
@@ -147,30 +151,56 @@ class ChristieCoordinator(DataUpdateCoordinator[ChristieData]):
         d = self._data
         self._lists_at = time.monotonic()
         self._unsupported.clear()  # give skipped queries another chance now and then
+        d.channel_numbers = {}
         try:
             channels = await self.client.request_list("CHA")
         except ChristieCommandError as err:
             _LOGGER.debug("%s: no channel list: %s", self.config_entry.title, err)
             channels = []
         d.channels_from_projector = bool(channels)
-        d.channels = channels or self._configured_channels()
+        if not channels:
+            # Series 2: numbered channels, names via (NAM+CALL?) -> (NAM+CALL!"Name" 00001)
+            try:
+                replies = await self.client.request_all("NAM+CALL")
+            except ChristieCommandError as err:
+                _LOGGER.debug("%s: no channel names: %s", self.config_entry.title, err)
+                replies = []
+            for m in replies:
+                name = (m.text or "").strip()
+                numbers = [int(x) for x in m.params if x.isdigit()]
+                if not name or not numbers:
+                    continue
+                if name in d.channel_numbers:
+                    name = f"{name} ({numbers[-1]})"
+                d.channel_numbers[name] = numbers[-1]
+            channels = list(d.channel_numbers)
+        if not channels:
+            channels = self._configured_channels()
+            d.channel_numbers = {name: i + 1 for i, name in enumerate(channels)}
+        d.channels = channels
         try:
             patterns = await self.client.request_list("ITP")
         except ChristieCommandError as err:
             _LOGGER.debug("%s: no test pattern list: %s", self.config_entry.title, err)
             patterns = []
+        # "Testpattern Off" (Series 2) is the off entry, offered as PATTERN_OFF instead
+        patterns = [x for x in patterns if x.strip().lower() not in _OFF_NAMES]
         if patterns or not d.patterns:
             d.patterns = patterns
 
     def _channel_name(self, m: p.Message) -> str | None:
-        """Name reply as is; a numeric reply (older models) maps to the configured names."""
+        """Name reply as is; a numeric reply (Series 2: 101..164) maps to the channel names."""
         if '"' in m.data or m.number is None:
             return m.text
         self._numeric_channels = True
-        names = self._data.channels
-        if not self._data.channels_from_projector and 0 < m.number <= len(names):
-            return names[m.number - 1]
-        return str(m.number)
+        number = m.number
+        if number > 100:
+            self._channel_offset = 100
+            number -= 100
+        for name, num in self._data.channel_numbers.items():
+            if num == number:
+                return name
+        return str(number)
 
     def _configured_channels(self) -> list[str]:
         text = self.config_entry.options.get(CONF_CHANNELS)
@@ -212,8 +242,8 @@ class ChristieCoordinator(DataUpdateCoordinator[ChristieData]):
     async def async_set_channel(self, name: str) -> None:
         d = self.data
         if self._numeric_channels and not d.channels_from_projector:
-            number = d.channels.index(name) + 1 if name in d.channels else int(name)
-            await self._set(f"CHA {number}")
+            number = d.channel_numbers.get(name) or int(name)
+            await self._set(f"CHA {number + self._channel_offset}")
         else:
             await self._set(f"CHA {p.quote(name)}")
         self._start_burst(BURST_SECONDS)
@@ -269,11 +299,16 @@ class ChristieCoordinator(DataUpdateCoordinator[ChristieData]):
         await self.client.close()
 
 
+_OFF_NAMES = {"testpattern off", "test pattern off", "off"}
+
+
 def _pattern_name(m: p.Message) -> str | None:
-    """``(ITP!0)`` / ``(ITP!"")`` = off, ``(ITP!"Name")`` = name."""
+    """``(ITP!0)``, ``(ITP!000 "Testpattern Off")``, ``(ITP!"")`` = off; else the name."""
+    if m.number == 0:
+        return None
     if '"' in m.data:
         name = m.text
-        return name or None
+        return None if not name or name.strip().lower() in _OFF_NAMES else name
     if m.number == 0 or not m.params:
         return None
     return m.params[0]
