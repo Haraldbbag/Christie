@@ -1,0 +1,12 @@
+send_command:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: christie
+    command:
+      required: true
+      example: "(HLP?)"
+      selector:
+        text:

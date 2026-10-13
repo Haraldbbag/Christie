@@ -1,0 +1,51 @@
+{
+  "entity": {
+    "select": {
+      "power": {
+        "default": "mdi:power",
+        "state": {
+          "standby": "mdi:power-sleep",
+          "lamp_off": "mdi:lightbulb-off-outline",
+          "lamp_on": "mdi:lightbulb-on"
+        }
+      },
+      "channel": {
+        "default": "mdi:video-input-hdmi"
+      },
+      "test_pattern": {
+        "default": "mdi:grid"
+      }
+    },
+    "sensor": {
+      "status": {
+        "default": "mdi:projector",
+        "state": {
+          "standby": "mdi:power-sleep",
+          "lamp_off": "mdi:lightbulb-off-outline",
+          "lamp_on": "mdi:lightbulb-on",
+          "cooling": "mdi:fan",
+          "warming_up": "mdi:timer-sand",
+          "hibernate": "mdi:sleep"
+        }
+      }
+    },
+    "switch": {
+      "shutter_closed": {
+        "default": "mdi:projector-off",
+        "state": {
+          "off": "mdi:projector-shot"
+        }
+      }
+    },
+    "button": {
+      "refresh_lists": {
+        "default": "mdi:refresh"
+      }
+    }
+  },
+  "services": {
+    "send_command": {
+      "service": "mdi:console"
+    }
+  }
+}

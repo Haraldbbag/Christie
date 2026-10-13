@@ -1,0 +1,119 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Christie projector",
+        "description": "The control port is normally 5000. User/password only if the projector requires a login (e.g. for test patterns).",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "name": "Name (e.g. Cinema 1)",
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reconfigure": {
+        "title": "Change connection",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the projector.",
+      "invalid_auth": "Login rejected."
+    },
+    "abort": {
+      "already_configured": "This projector is already configured.",
+      "reconfigure_successful": "Connection updated.",
+      "wrong_device": "This is a different projector (serial number differs)."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "scan_interval": "Polling interval (s)",
+          "read_only": "Read only",
+          "channels": "Channel names (if the projector cannot list them)"
+        },
+        "data_description": {
+          "read_only": "Blocks all commands that change something.",
+          "channels": "One name per line or comma separated. Empty = default channels."
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "power": {
+        "name": "Power",
+        "state": {
+          "standby": "Standby",
+          "lamp_off": "Light off",
+          "lamp_on": "Light on"
+        }
+      },
+      "channel": {
+        "name": "Channel"
+      },
+      "test_pattern": {
+        "name": "Test pattern"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "standby": "Standby",
+          "lamp_off": "Light off",
+          "lamp_on": "Light on",
+          "cooling": "Cooling down",
+          "warming_up": "Warming up",
+          "hibernate": "Hibernate",
+          "unknown": "Unknown"
+        },
+        "state_attributes": {
+          "cooldown_seconds": {
+            "name": "Cool-down (s)"
+          }
+        }
+      }
+    },
+    "switch": {
+      "shutter_closed": {
+        "name": "Shutter closed"
+      }
+    },
+    "binary_sensor": {
+      "connected": {
+        "name": "Connected"
+      }
+    },
+    "button": {
+      "refresh_lists": {
+        "name": "Refresh lists"
+      }
+    }
+  },
+  "services": {
+    "send_command": {
+      "name": "Send command",
+      "description": "Sends a raw command, e.g. (HLP?), and returns all replies.",
+      "fields": {
+        "device_id": {
+          "name": "Projector",
+          "description": "Christie projector"
+        },
+        "command": {
+          "name": "Command",
+          "description": "With or without brackets, e.g. PWR? or (SHU 1)"
+        }
+      }
+    }
+  }
+}

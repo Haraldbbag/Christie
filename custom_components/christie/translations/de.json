@@ -1,0 +1,119 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Christie-Projektor hinzufügen",
+        "description": "Steuerport ist normalerweise 5000. Benutzer/Passwort nur, wenn der Projektor eine Anmeldung verlangt (z. B. für Testbilder).",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "name": "Name (z. B. Kino 1)",
+          "username": "Benutzer",
+          "password": "Passwort"
+        }
+      },
+      "reconfigure": {
+        "title": "Verbindung ändern",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Benutzer",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Keine Verbindung zum Projektor.",
+      "invalid_auth": "Anmeldung abgelehnt."
+    },
+    "abort": {
+      "already_configured": "Dieser Projektor ist bereits eingerichtet.",
+      "reconfigure_successful": "Verbindung aktualisiert.",
+      "wrong_device": "Das ist ein anderer Projektor (Seriennummer weicht ab)."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen",
+        "data": {
+          "scan_interval": "Abfrageintervall (s)",
+          "read_only": "Nur lesen",
+          "channels": "Kanalnamen (falls der Projektor keine Liste liefert)"
+        },
+        "data_description": {
+          "read_only": "Blockiert alle Schaltbefehle (Lampe, Shutter, Kanal, Testbild, Rohbefehle ohne „?“).",
+          "channels": "Ein Name pro Zeile oder durch Komma getrennt. Leer = Standard-Kanäle."
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "power": {
+        "name": "Betriebszustand",
+        "state": {
+          "standby": "Standby",
+          "lamp_off": "Lampe aus",
+          "lamp_on": "Lampe an"
+        }
+      },
+      "channel": {
+        "name": "Kanal"
+      },
+      "test_pattern": {
+        "name": "Testbild"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "standby": "Standby",
+          "lamp_off": "Lampe aus",
+          "lamp_on": "Lampe an",
+          "cooling": "Abkühlen",
+          "warming_up": "Aufwärmen",
+          "hibernate": "Ruhezustand",
+          "unknown": "Unbekannt"
+        },
+        "state_attributes": {
+          "cooldown_seconds": {
+            "name": "Abkühlzeit (s)"
+          }
+        }
+      }
+    },
+    "switch": {
+      "shutter_closed": {
+        "name": "Shutter geschlossen"
+      }
+    },
+    "binary_sensor": {
+      "connected": {
+        "name": "Verbunden"
+      }
+    },
+    "button": {
+      "refresh_lists": {
+        "name": "Listen aktualisieren"
+      }
+    }
+  },
+  "services": {
+    "send_command": {
+      "name": "Befehl senden",
+      "description": "Sendet einen Rohbefehl, z. B. (HLP?), und gibt alle Antworten zurück.",
+      "fields": {
+        "device_id": {
+          "name": "Projektor",
+          "description": "Christie-Projektor"
+        },
+        "command": {
+          "name": "Befehl",
+          "description": "Mit oder ohne Klammern, z. B. PWR? oder (SHU 1)"
+        }
+      }
+    }
+  }
+}
