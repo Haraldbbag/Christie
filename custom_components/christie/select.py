@@ -49,7 +49,12 @@ class ChristiePower(ChristieEntity, SelectEntity):
 
     @property
     def current_option(self) -> str | None:
-        return _CURRENT.get(self.coordinator.data.state)
+        # The target from PWR? (0/1/3) is what was chosen; PWR+STAT only adds the
+        # transition (warming up / cooling down), which the status sensor shows.
+        d = self.coordinator.data
+        if d.power in (PWR_LIGHT_OFF, PWR_ON, PWR_STANDBY):
+            return _CURRENT[d.power]
+        return _CURRENT.get(d.state)
 
     async def async_select_option(self, option: str) -> None:
         await self.coordinator.async_set_power(option)
