@@ -7,10 +7,18 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.config_entries import (
+    ConfigEntryState,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
@@ -26,6 +34,8 @@ from .const import (
     CONF_CHANNELS,
     CONF_READ_ONLY,
     CONF_SCAN_INTERVAL,
+    CONF_VISIBLE_CHANNELS,
+    CONF_VISIBLE_PATTERNS,
     DEFAULT_PORTS,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
@@ -151,9 +161,29 @@ class ProjectorConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class ProjectorOptionsFlow(OptionsFlow):
+    """Menu: general settings, visible channels, visible test patterns."""
+
+    def _save(self, values: dict[str, Any]) -> ConfigFlowResult:
+        # The options flow replaces all options: keep the ones of the other pages.
+        return self.async_create_entry(data={**self.config_entry.options, **values})
+
+    def _lists(self) -> tuple[list[str], list[str]] | None:
+        entry = self.config_entry
+        if entry.state is not ConfigEntryState.LOADED or entry.runtime_data.data is None:
+            return None
+        data = entry.runtime_data.data
+        return list(data.channels), list(data.patterns)
+
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        options = ["general", "visible_channels"]
+        entry = self.config_entry
+        if entry.state is ConfigEntryState.LOADED and entry.runtime_data.driver.has_patterns:
+            options.append("visible_patterns")
+        return self.async_show_menu(step_id="init", menu_options=options)
+
+    async def async_step_general(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
+            return self._save(user_input)
         opts = self.config_entry.options
         fields: dict[Any, Any] = {
             vol.Required(
@@ -165,4 +195,43 @@ class ProjectorOptionsFlow(OptionsFlow):
             fields[
                 vol.Optional(CONF_CHANNELS, description={"suggested_value": opts.get(CONF_CHANNELS, "")})
             ] = TextSelector(TextSelectorConfig(multiline=True))
-        return self.async_show_form(step_id="init", data_schema=vol.Schema(fields))
+        return self.async_show_form(step_id="general", data_schema=vol.Schema(fields))
+
+    async def async_step_visible_channels(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self._checkboxes("visible_channels", CONF_VISIBLE_CHANNELS, 0, user_input)
+
+    async def async_step_visible_patterns(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self._checkboxes("visible_patterns", CONF_VISIBLE_PATTERNS, 1, user_input)
+
+    async def _checkboxes(
+        self, step_id: str, key: str, index: int, user_input: dict[str, Any] | None
+    ) -> ConfigFlowResult:
+        lists = self._lists()
+        if lists is None:
+            return self.async_abort(reason="not_loaded")
+        if user_input is not None:
+            return self._save({key: list(user_input.get(key, []))})
+        selected = list(self.config_entry.options.get(key, []))
+        items = lists[index]
+        # Keep checked names the projector no longer reports, so they can be unchecked.
+        items += [x for x in selected if x not in items]
+        if not items:
+            return self.async_abort(reason="no_items")
+        schema = vol.Schema(
+            {
+                vol.Optional(key, default=selected): SelectSelector(
+                    SelectSelectorConfig(
+                        options=items, multiple=True, mode=SelectSelectorMode.LIST
+                    )
+                )
+            }
+        )
+        return self.async_show_form(
+            step_id=step_id,
+            data_schema=schema,
+            description_placeholders={"count": str(len(lists[index]))},
+        )

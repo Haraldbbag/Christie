@@ -14,7 +14,8 @@ from .common import (
     PWR_STANDBY,
     PWR_WARMING,
 )
-from .const import PATTERN_OFF
+from .common import visible_items
+from .const import CONF_VISIBLE_CHANNELS, CONF_VISIBLE_PATTERNS, PATTERN_OFF
 from .coordinator import ProjectorConfigEntry, ProjectorCoordinator
 from .entity import ProjectorEntity
 
@@ -70,11 +71,11 @@ class ProjectorChannel(ProjectorEntity, SelectEntity):
 
     @property
     def options(self) -> list[str]:
-        options = list(self.coordinator.data.channels)
-        current = self.current_option
-        if current and current not in options:
-            options.append(current)
-        return options
+        return visible_items(
+            self.coordinator.data.channels,
+            self.coordinator.config_entry.options.get(CONF_VISIBLE_CHANNELS),
+            self.current_option,
+        )
 
     @property
     def current_option(self) -> str | None:
@@ -92,11 +93,14 @@ class ProjectorPattern(ProjectorEntity, SelectEntity):
 
     @property
     def options(self) -> list[str]:
-        options = [PATTERN_OFF, *self.coordinator.data.patterns]
-        current = self.coordinator.data.pattern
-        if current and current not in options:
-            options.append(current)
-        return options
+        return [
+            PATTERN_OFF,
+            *visible_items(
+                self.coordinator.data.patterns,
+                self.coordinator.config_entry.options.get(CONF_VISIBLE_PATTERNS),
+                self.coordinator.data.pattern,
+            ),
+        ]
 
     @property
     def current_option(self) -> str | None:

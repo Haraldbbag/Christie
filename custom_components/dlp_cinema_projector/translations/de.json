@@ -63,6 +63,14 @@
     "step": {
       "init": {
         "title": "Optionen",
+        "menu_options": {
+          "general": "Allgemein",
+          "visible_channels": "Kanäle auswählen",
+          "visible_patterns": "Testbilder auswählen"
+        }
+      },
+      "general": {
+        "title": "Allgemein",
         "data": {
           "scan_interval": "Abfrageintervall (s)",
           "read_only": "Nur lesen",
@@ -72,7 +80,25 @@
           "read_only": "Blockiert alle Schaltbefehle (Lampe, Shutter, Kanal, Testbild, schreibende Rohbefehle).",
           "channels": "Ein Name pro Zeile oder durch Komma getrennt. Leer = Standard-Kanäle."
         }
+      },
+      "visible_channels": {
+        "title": "Kanäle in der Auswahl",
+        "description": "Angehakte Kanäle erscheinen in der Auswahl „Kanal“ ({count} auf dem Projektor). Nichts angehakt = alle. Neue Kanäle auf dem Projektor bleiben ausgeblendet, bis sie hier angehakt werden.",
+        "data": {
+          "visible_channels": "Kanäle"
+        }
+      },
+      "visible_patterns": {
+        "title": "Testbilder in der Auswahl",
+        "description": "Angehakte Testbilder erscheinen in der Auswahl „Testbild“ ({count} auf dem Projektor). „Aus“ ist immer dabei. Nichts angehakt = alle. Neue Testbilder bleiben ausgeblendet, bis sie hier angehakt werden.",
+        "data": {
+          "visible_patterns": "Testbilder"
+        }
       }
+    },
+    "abort": {
+      "not_loaded": "Der Projektor ist gerade nicht verbunden – die Listen können erst angezeigt werden, wenn die Integration geladen ist.",
+      "no_items": "Der Projektor hat (noch) keine Einträge gemeldet. Ggf. „Listen aktualisieren“ drücken."
     }
   },
   "entity": {

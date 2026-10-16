@@ -48,6 +48,17 @@ ersten erfolgreichen Test in den Optionen ausschalten.
 | Nur lesen | aus (Barco/Kinoton: an) | Blockiert alle Schaltbefehle |
 | Kanalnamen | leer | nur Christie, nur für Projektoren ohne Kanalliste |
 
+Die Optionen sind in drei Seiten aufgeteilt: **Allgemein** (die Tabelle oben),
+**Kanäle auswählen** und **Testbilder auswählen** (nur Christie). Auf den beiden
+Auswahlseiten steht die komplette Liste vom Projektor mit Checkboxen:
+
+- Angehakte Einträge erscheinen in der Auswahl, in der Reihenfolge des Projektors.
+- Nichts angehakt = alle Einträge (Standard). „Aus“ ist bei den Testbildern immer dabei.
+- Neue Einträge auf dem Projektor bleiben ausgeblendet, bis sie angehakt werden.
+- Ist ein ausgeblendeter Kanal/Testbild gerade aktiv (z. B. am Touchpanel gewählt),
+  wird er trotzdem als aktueller Wert angezeigt.
+- Die Seiten brauchen eine bestehende Verbindung zum Projektor (sie zeigen dessen Listen).
+
 ## Entitäten
 
 | Entität | Christie | Barco / Kinoton |
@@ -122,6 +133,7 @@ logger:
 ```bash
 python3 tests/fake_christie.py 0.0.0.0 5000 [--series2]
 python3 tests/fake_barco.py 0.0.0.0 43728
+python3 tests/test_common.py
 python3 tests/test_christie.py
 python3 tests/test_barco.py
 ```

@@ -63,6 +63,14 @@
     "step": {
       "init": {
         "title": "Options",
+        "menu_options": {
+          "general": "General",
+          "visible_channels": "Choose channels",
+          "visible_patterns": "Choose test patterns"
+        }
+      },
+      "general": {
+        "title": "General",
         "data": {
           "scan_interval": "Polling interval (s)",
           "read_only": "Read only",
@@ -72,7 +80,25 @@
           "read_only": "Blocks all commands that change something.",
           "channels": "One name per line or comma separated. Empty = default channels."
         }
+      },
+      "visible_channels": {
+        "title": "Channels in the select",
+        "description": "Checked channels appear in the channel select ({count} on the projector). Nothing checked = all. New channels stay hidden until checked here.",
+        "data": {
+          "visible_channels": "Channels"
+        }
+      },
+      "visible_patterns": {
+        "title": "Test patterns in the select",
+        "description": "Checked test patterns appear in the test pattern select ({count} on the projector). \"Off\" is always included. Nothing checked = all. New patterns stay hidden until checked here.",
+        "data": {
+          "visible_patterns": "Test patterns"
+        }
       }
+    },
+    "abort": {
+      "not_loaded": "The projector is not connected – the lists can only be shown while the integration is loaded.",
+      "no_items": "The projector has not reported any entries yet. Try \"Refresh lists\"."
     }
   },
   "entity": {

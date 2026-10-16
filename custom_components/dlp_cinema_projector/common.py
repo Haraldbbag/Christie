@@ -66,3 +66,17 @@ class ProjectorData:
         if self.power_status is not None and self.power_status in POWER_STATES:
             return self.power_status
         return self.power
+
+
+def visible_items(items: list[str], selected: list[str] | None, current: str | None) -> list[str]:
+    """Items shown in a select: all if nothing is selected, otherwise only the selected
+    ones (in projector order; new projector entries stay hidden). The current value is
+    always kept so the select never shows "unknown" for a hidden but active entry."""
+    if selected:
+        chosen = set(selected)
+        out = [x for x in items if x in chosen]
+    else:
+        out = list(items)
+    if current and current not in out:
+        out.append(current)
+    return out

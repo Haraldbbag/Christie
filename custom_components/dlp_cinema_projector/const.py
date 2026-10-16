@@ -16,6 +16,8 @@ LIST_REFRESH = 600  # seconds between re-reading channel and test pattern lists
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_READ_ONLY = "read_only"
 CONF_CHANNELS = "channels"
+CONF_VISIBLE_CHANNELS = "visible_channels"
+CONF_VISIBLE_PATTERNS = "visible_patterns"
 
 PATTERN_OFF = "Aus"
 
